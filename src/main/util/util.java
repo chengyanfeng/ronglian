@@ -96,10 +96,12 @@ public static boolean creatFile(String path){
     }
     try{//异常处理
         //如果Qiju_Li文件夹下没有Qiju_Li.txt就会创建该文件
-        BufferedWriter bw=new BufferedWriter(new FileWriter(path+"./1.txt"));
+        BufferedWriter bw=new BufferedWriter(new FileWriter(path+"/1.txt"));
+        System.out.println("创建1.txt 成功");
         bw.write("Hello I/O!");//在创建好的文件中写入"Hello I/O"
         bw.close();//一定要关闭文件
     }catch(IOException e){
+        System.out.println("创建1.txt 失败");
         e.printStackTrace();
     }
     return true;

@@ -46,7 +46,7 @@ public class MainController {
             userR.setFlag("false");
             return userR;
         }
-        boolean ex = util.ifEx("./CSVPATH/" + user + "./1.txt");
+        boolean ex = util.ifEx("./CSVPATH/" + user + "/1.txt");
         if (ex) {
             userR.setFlag("ex");
             return userR;
@@ -85,7 +85,7 @@ public class MainController {
             userRe.setFlag("false");
             return userRe;
         }
-        boolean ex = util.ifEx("./CSVPATH/" + user + "./1.txt");
+        boolean ex = util.ifEx("./CSVPATH/" + user + "/1.txt");
         if (ex) {
             userRe.setFlag("ex");
             return userRe;
@@ -184,7 +184,7 @@ public class MainController {
     @ResponseBody
     public List<User> downloadFile(@RequestParam(value = "user", required = true) String user) {
         List<User> list = new ArrayList<>();
-        boolean ex = util.ifEx("./CSVPATH/" + user + "./1.txt");
+        boolean ex = util.ifEx("./CSVPATH/" + user + "/1.txt");
         if (ex) {
             User u = new User();
             u.setFileName("未知");

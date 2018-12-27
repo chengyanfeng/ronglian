@@ -26,7 +26,6 @@ public class QueryData {
    /* private static MongoClient mongo = MongoConnect.getInstance().connect("172.21.0.4", 7211, "7moor", "7moorcom");*/
     private static MongoClient mongo = MongoConnect.getInstance().connect("47.97.3.136", 9999, "sj_user", "sj20181115");
    public static List<DBObject> list=null;
-    private  static ExecutorService pool = Executors.newFixedThreadPool(100);
 
     public List<Document> getShow(String beginTime,String endTime,String line){
         List<Document>  list=null;
@@ -38,14 +37,15 @@ public class QueryData {
     }
 
     public String getData(String beginTime,String endTime,String line,String user){
-        // 创建一个可重用固定线程数的线程池  
-        // 将线程放入池中进行执行  
-        pool.execute(() -> {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS");
+        new Thread() {
+            @Override
+            public void run() {
+                System.out.println("启动--线程");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS");
             /*String beginTime = "2018-10-01 00:00:00";
             String endTime = "2018-12-01 00:00:00";*/
             List<Date> dateList = util.findDates(beginTime, endTime, sdf);
-
+            System.out.println("开始执行");
             util.creatFile( "./CSVPATH/" + user);
 
             for (int i = 0; i < dateList.size(); i++) {
@@ -56,7 +56,7 @@ public class QueryData {
 
                 }
             }
-            util.delete("./CSVPATH/" + user+"./1.txt");
+            util.delete("./CSVPATH/" + user+"/1.txt");
 
             List<File> srcFiles = new ArrayList<>();
             srcFiles.add(new File("./CSVPATH/"+user));
@@ -64,9 +64,9 @@ public class QueryData {
             ZipUtils.zipFile("./ZIP/" + user+"/"+user+"_"+line+"_"+beginTime.substring(0,10)+".zip",srcFiles);
             //删除文件下的所有文件
             util.deleteDirectory("./CSVPATH/"+user);
+            }
+        }.start();
 
-        });
-        pool.shutdown();
         return "ok";
     }
 
@@ -80,6 +80,7 @@ public class QueryData {
         userKeys.put("displayName", 1);
         userKeys.put("exten", 1);
         where_agent.putAll(query_agent);
+
         if(list==null){
             List<DBObject> list_agent = mongo.getDB("sj_data").getCollection("platform_user1210").find(where_agent, userKeys).toArray();
             list=list_agent;
@@ -112,41 +113,50 @@ public class QueryData {
         MongoCursor<Document> mongoCursor = test.iterator();
         List<Document> cdrCcList=new LinkedList<>();
         while (mongoCursor.hasNext()) {
-            i=i+1;
             Document cdrCc = mongoCursor.next();
-            cdrCc.put("callAddr", "" + cdrCc.get("callerProvince") + "-" + cdrCc.get("callerCity"));
-            cdrCc.put("calledAddr", "" + cdrCc.get("calleeProvince") + "-" + cdrCc.get("calleeCity"));
-            String agentId = (String) cdrCc.get("agentId");
+            i = i + 1;
+            try {
 
-            DBObject dbAgent = (agentId == null || agentId.equals("") ? null : (checkAgentId(list, agentId == null ? "" : agentId.toString())));
-            cdrCc.put("agentDisplayName", dbAgent == null ? "" : dbAgent.get("displayName"));
-            String agentExtenId = (String) cdrCc.get("agentId");
-            DBObject dbAgentExten = (agentExtenId == null || agentExtenId.equals("") ? null : (checkAgentId(list, agentExtenId == null ? "" : agentExtenId.toString())));
-            cdrCc.put("agentExten", dbAgentExten == null ? "" : dbAgentExten.get("exten"));
 
-            if (cdrCc.get("type") != null) {
-                String dialType = cdrCc.get("type").toString();
-                if (dialType.equals("normal")) {
-                    dialType = "普通来电";
-                } else if (dialType.equals("dialout")) {
-                    dialType = "外呼去电";
-                } else if (dialType.equals("transfer")) {
-                    dialType = "转接来电";
-                } else if (dialType.equals("dialTransfer")) {
-                    dialType = "外呼转接";
+                cdrCc.put("callAddr", "" + cdrCc.get("callerProvince") + "-" + cdrCc.get("callerCity"));
+                cdrCc.put("calledAddr", "" + cdrCc.get("calleeProvince") + "-" + cdrCc.get("calleeCity"));
+                String agentId = (String) cdrCc.get("agentId");
+
+                DBObject dbAgent = (agentId == null || agentId.equals("") ? null : (checkAgentId(list, agentId == null ? "" : agentId.toString())));
+                cdrCc.put("agentDisplayName", dbAgent == null ? "" : dbAgent.get("displayName"));
+                String agentExtenId = (String) cdrCc.get("agentId");
+                DBObject dbAgentExten = (agentExtenId == null || agentExtenId.equals("") ? null : (checkAgentId(list, agentExtenId == null ? "" : agentExtenId.toString())));
+                cdrCc.put("agentExten", dbAgentExten == null ? "" : dbAgentExten.get("exten"));
+
+                if (cdrCc.get("type") != null) {
+                    String dialType = cdrCc.get("type").toString();
+                    if (dialType.equals("normal")) {
+                        dialType = "普通来电";
+                    } else if (dialType.equals("dialout")) {
+                        dialType = "外呼去电";
+                    } else if (dialType.equals("transfer")) {
+                        dialType = "转接来电";
+                    } else if (dialType.equals("dialTransfer")) {
+                        dialType = "外呼转接";
+                    }
+                    cdrCc.put("type", dialType);
                 }
-                cdrCc.put("type", dialType);
-            }
-            if (cdrCc.get("isLocal") != null) {
-                String isLocal = cdrCc.get("isLocal").toString();
-                if (isLocal.equals(true)) {
-                    isLocal = "本地";
-                } else {
-                    isLocal = "长途";
+                if (cdrCc.get("isLocal") != null) {
+                    String isLocal = cdrCc.get("isLocal").toString();
+                    if (isLocal.equals(true)) {
+                        isLocal = "本地";
+                    } else {
+                        isLocal = "长途";
+                    }
+                    cdrCc.put("isLocal", isLocal);
                 }
-                cdrCc.put("isLocal", isLocal);
+            }catch (Exception e){
+                System.out.println(e);
             }
-            System.out.println(i);
+            if(i%1000==0){
+                System.out.println(i);
+            }
+
             cdrCcList.add(cdrCc);
         }
         util.createCSVFile(cdrCcList,headMap,"./CSVPATH/"+user,"./公司线路对应" + product + "话单"+beginTime.substring(0,10)+"_");
@@ -182,41 +192,49 @@ public class QueryData {
         MongoCursor<Document> mongoCursor = test.iterator();
         List<Document> cdrCcList=new LinkedList<>();
         while (mongoCursor.hasNext()) {
-            i=i+1;
             Document cdrCc = mongoCursor.next();
-            cdrCc.put("callAddr", "" + cdrCc.get("callerProvince") + "-" + cdrCc.get("callerCity"));
-            cdrCc.put("calledAddr", "" + cdrCc.get("calleeProvince") + "-" + cdrCc.get("calleeCity"));
-            String agentId = (String) cdrCc.get("agentId");
+            try {
+                i = i + 1;
 
-            DBObject dbAgent = (agentId == null || agentId.equals("") ? null : (checkAgentId(list, agentId == null ? "" : agentId.toString())));
-            cdrCc.put("agentDisplayName", dbAgent == null ? "" : dbAgent.get("displayName"));
-            String agentExtenId = (String) cdrCc.get("agentId");
-            DBObject dbAgentExten = (agentExtenId == null || agentExtenId.equals("") ? null : (checkAgentId(list, agentExtenId == null ? "" : agentExtenId.toString())));
-            cdrCc.put("agentExten", dbAgentExten == null ? "" : dbAgentExten.get("exten"));
+                cdrCc.put("callAddr", "" + cdrCc.get("callerProvince") + "-" + cdrCc.get("callerCity"));
+                cdrCc.put("calledAddr", "" + cdrCc.get("calleeProvince") + "-" + cdrCc.get("calleeCity"));
+                String agentId = (String) cdrCc.get("agentId");
 
-            if (cdrCc.get("type") != null) {
-                String dialType = cdrCc.get("type").toString();
-                if (dialType.equals("normal")) {
-                    dialType = "普通来电";
-                } else if (dialType.equals("dialout")) {
-                    dialType = "外呼去电";
-                } else if (dialType.equals("transfer")) {
-                    dialType = "转接来电";
-                } else if (dialType.equals("dialTransfer")) {
-                    dialType = "外呼转接";
+                DBObject dbAgent = (agentId == null || agentId.equals("") ? null : (checkAgentId(list, agentId == null ? "" : agentId.toString())));
+                cdrCc.put("agentDisplayName", dbAgent == null ? "" : dbAgent.get("displayName"));
+                String agentExtenId = (String) cdrCc.get("agentId");
+                DBObject dbAgentExten = (agentExtenId == null || agentExtenId.equals("") ? null : (checkAgentId(list, agentExtenId == null ? "" : agentExtenId.toString())));
+                cdrCc.put("agentExten", dbAgentExten == null ? "" : dbAgentExten.get("exten"));
+
+                if (cdrCc.get("type") != null) {
+                    String dialType = cdrCc.get("type").toString();
+                    if (dialType.equals("normal")) {
+                        dialType = "普通来电";
+                    } else if (dialType.equals("dialout")) {
+                        dialType = "外呼去电";
+                    } else if (dialType.equals("transfer")) {
+                        dialType = "转接来电";
+                    } else if (dialType.equals("dialTransfer")) {
+                        dialType = "外呼转接";
+                    }
+                    cdrCc.put("type", dialType);
                 }
-                cdrCc.put("type", dialType);
-            }
-            if (cdrCc.get("isLocal") != null) {
-                String isLocal = cdrCc.get("isLocal").toString();
-                if (isLocal.equals(true)) {
-                    isLocal = "本地";
-                } else {
-                    isLocal = "长途";
+                if (cdrCc.get("isLocal") != null) {
+                    String isLocal = cdrCc.get("isLocal").toString();
+                    if (isLocal.equals(true)) {
+                        isLocal = "本地";
+                    } else {
+                        isLocal = "长途";
+                    }
+                    cdrCc.put("isLocal", isLocal);
                 }
-                cdrCc.put("isLocal", isLocal);
+                if (i % 1000 == 0) {
+                    System.out.println(i);
+                }
+            }catch (Exception e){
+                System.out.println(e);
             }
-            System.out.println(i);
+
             cdrCcList.add(cdrCc);
         }
         util.createCSVFile(cdrCcList,headMap,"./CSVPATH/"+user,"./公司线路对应" + product + "话单"+beginTime.substring(0,10)+"_");
@@ -283,9 +301,10 @@ return cdrCcList;
 
 
     public String getAccountData(String beginTime,String endTime,String account,String user){
-        // 创建一个可重用固定线程数的线程池  
-        // 将线程放入池中进行执行  
-        pool.execute(() -> {
+
+        new Thread() {
+            @Override
+            public void run() {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS");
             /*String beginTime = "2018-10-01 00:00:00";
             String endTime = "2018-12-01 00:00:00";*/
@@ -301,7 +320,7 @@ return cdrCcList;
 
                 }
             }
-            util.delete("./CSVPATH/" + user+"./1.txt");
+            util.delete("./CSVPATH/" + user+"/1.txt");
 
             List<File> srcFiles = new ArrayList<>();
             srcFiles.add(new File("./CSVPATH/"+user));
@@ -310,10 +329,8 @@ return cdrCcList;
             //删除文件下的所有文件
             util.deleteDirectory("./CSVPATH/"+user);
 
-        });
-
-
-        pool.shutdown();
+            }
+        }.start();
         return "ok";
     }
     public List<Document> getAccouontShow(String beginTime,String endTime,String account){

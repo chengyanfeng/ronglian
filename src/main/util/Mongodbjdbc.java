@@ -14,8 +14,8 @@ import java.util.List;
 
 
 public class Mongodbjdbc {
-    private static final Logger logger = LoggerFactory
-            .getLogger(Mongodbjdbc.class);
+   /* private static final Logger logger = LoggerFactory
+            .getLogger(Mongodbjdbc.class);*/
     public static MongoDatabase mongoDatabase = null;
 
 
@@ -26,6 +26,7 @@ public class Mongodbjdbc {
         try {
             //连接到MongoDB服务 如果是远程连接可以替换“localhost”为服务器所在IP地址
             //ServerAddress()两个参数分别为 服务器地址 和 端口
+            /*ServerAddress serverAddress = new ServerAddress("47.97.3.136", 9999);*/
             ServerAddress serverAddress = new ServerAddress("47.97.3.136", 9999);
             List<ServerAddress> addrs = new ArrayList<ServerAddress>();
             addrs.add(serverAddress);
@@ -44,8 +45,8 @@ public class Mongodbjdbc {
 
 
         } catch (Exception e) {
-            /*logger.error("数据库链接失败");*/
-            e.printStackTrace();
+
+           e.printStackTrace();
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
 
 
@@ -67,10 +68,10 @@ public class Mongodbjdbc {
     public static boolean CloseMongoClient(MongoClient mongoDatabase) {
         if (mongoDatabase != null) {
             mongoDatabase.close();
-           logger.debug("CloseMongoClient successfully");
+          /* logger.debug("CloseMongoClient successfully");*/
             return true;
         } else {
-            logger.debug("CloseMongoClient false");
+           /* logger.debug("CloseMongoClient false");*/
             return false;
         }
 
