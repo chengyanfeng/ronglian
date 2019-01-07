@@ -1,10 +1,13 @@
 package main.controller;
 
+import com.sun.deploy.net.HttpResponse;
 import main.model.User;
 import main.serverice.QueryData;
 import main.util.util;
 import org.bson.Document;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +45,7 @@ public class MainController {
         endTime = endTime + " 00:00:00";
         User userR=new User();
         List<Date> dateList = util.findDates(beginTime, endTime, sdf);
-        if (dateList.size() > 31) {
+        if (dateList.size() > 32) {
             userR.setFlag("false");
             return userR;
         }
@@ -58,23 +61,24 @@ public class MainController {
 
     }
 
-    @RequestMapping(value = "/queryAccount", method = {RequestMethod.GET}, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @RequestMapping(value = "/queryXiaoHao", method = {RequestMethod.GET}, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
-    public List<Document> queryAccoun(@RequestParam(value = "beginTime", required = false) String beginTime, @RequestParam(value = "endTime", required = false) String endTime, @RequestParam(value = "account", required = false) String account, @RequestParam(value = "user", required = true) String user) {
+    public List<Document> queryXiaoHao(@RequestParam(value = "beginTime", required = false) String beginTime, @RequestParam(value = "endTime", required = false) String endTime, @RequestParam(value = "account", required = false) String account, @RequestParam(value = "user", required = true) String user) {
         if (user == null) {
             return null;
         }
         QueryData queryLineData = new QueryData();
         beginTime = beginTime + " 00:00:00";
         endTime = endTime + " 00:00:00";
-        List<Document> list = queryLineData.getAccouontShow(beginTime, endTime, account);
+        List<Document> list = queryLineData.getXiaoHaoShow(beginTime, endTime, account);
 
         return list;
     }
 
-    @RequestMapping(value = "/exportAccount", method = {RequestMethod.GET}, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+
+    @RequestMapping(value = "/exportXiaoHao", method = {RequestMethod.GET}, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ResponseBody
-    public User queryAccountDate(@RequestParam(value = "beginTime", required = false) String beginTime, @RequestParam(value = "endTime", required = false) String endTime, @RequestParam(value = "account", required = false) String account, @RequestParam(value = "user", required = true) String user) {
+    public User exportXiaoHaoDate(@RequestParam(value = "beginTime", required = false) String beginTime, @RequestParam(value = "endTime", required = false) String endTime, @RequestParam(value = "account", required = false) String account, @RequestParam(value = "user", required = true) String user) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS");
         QueryData queryLineData = new QueryData();
         beginTime = beginTime + " 00:00:00";
@@ -90,11 +94,68 @@ public class MainController {
             userRe.setFlag("ex");
             return userRe;
         } else {
+            String flag = queryLineData.getXiaoHaoData(beginTime, endTime, account, user);
+            userRe.setFlag("flag");
+            return userRe;
+        }
+
+    }
+
+
+    @RequestMapping(value = "/exportAccount", method = {RequestMethod.GET}, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public User exportAccountDate(@RequestParam(value = "beginTime", required = false) String beginTime, @RequestParam(value = "endTime", required = false) String endTime, @RequestParam(value = "account", required = false) String account, @RequestParam(value = "user", required = true) String user) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:SS");
+        QueryData queryLineData = new QueryData();
+        beginTime = beginTime + " 00:00:00";
+        endTime = endTime + " 00:00:00";
+        List<Date> dateList = util.findDates(beginTime, endTime, sdf);
+        User userRe=new User();
+        if (dateList.size() > 35) {
+            userRe.setFlag("false");
+            return userRe;
+        }
+        boolean ex = util.ifEx("./CSVPATH/" + user + "/1.txt");
+        if (ex) {
+            userRe.setFlag("ex");
+            return userRe;
+        } else {
             String flag = queryLineData.getAccountData(beginTime, endTime, account, user);
             userRe.setFlag("flag");
             return userRe;
         }
 
+    }
+
+
+
+
+    @RequestMapping(value = "/queryAccount", method = {RequestMethod.GET}, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<Document> queryAccoun(@RequestParam(value = "beginTime", required = false) String beginTime, @RequestParam(value = "endTime", required = false) String endTime, @RequestParam(value = "account", required = false) String account, @RequestParam(value = "user", required = true) String user) {
+        if (user == null) {
+            return null;
+        }
+        QueryData queryLineData = new QueryData();
+        beginTime = beginTime + " 00:00:00";
+        endTime = endTime + " 00:00:00";
+        List<Document> list = queryLineData.getAccouontShow(beginTime, endTime, account);
+
+        return list;
+    }
+
+    @RequestMapping(value = "/querySMS", method = {RequestMethod.GET}, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public List<Document> querySMS(@RequestParam(value = "beginTime", required = false) String beginTime, @RequestParam(value = "endTime", required = false) String endTime, @RequestParam(value = "account", required = false) String account, @RequestParam(value = "user", required = true) String user) {
+        if (user == null) {
+            return null;
+        }
+        QueryData queryLineData = new QueryData();
+        beginTime = beginTime + " 00:00:00";
+        endTime = endTime + " 00:00:00";
+        List<Document> list = queryLineData.getSMSShow(beginTime, endTime, account);
+
+        return list;
     }
 
 

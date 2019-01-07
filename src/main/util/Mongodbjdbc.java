@@ -41,7 +41,7 @@ public class Mongodbjdbc {
             MongoClient mongoClient = new MongoClient(addrs, credentials,optionsBuilder.build());
 
             //连接到数据库
-            mongoDatabase = mongoClient.getDatabase("sj_data");
+            mongoDatabase = mongoClient.getDatabase("bill_data");
 
 
         } catch (Exception e) {
@@ -51,7 +51,9 @@ public class Mongodbjdbc {
 
 
         }
+
         return mongoDatabase;
+
 
 
     }
